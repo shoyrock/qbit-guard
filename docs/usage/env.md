@@ -117,6 +117,24 @@ Complete reference of all environment variables supported by qbit-guard, organiz
 
 ---
 
+## Fake Torrent Protection
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MIN_TORRENT_AGE_MINUTES` | `0` | Minimum torrent age in minutes (`0` = disabled, recommended: `5`-`10`) |
+
+!!! warning "Fake Torrent Detection"
+    Fake torrents often have a creation date of 0 minutes or very recent timestamps. Enable this check if you're experiencing issues with fake torrents:
+    
+    - **Disabled by default** (`0`) to avoid blocking legitimate new releases
+    - When enabled (e.g., `MIN_TORRENT_AGE_MINUTES=5`), blocks torrents younger than the specified age
+    - Blocked torrents are tagged as `trash:too-new` and blocklisted in Sonarr/Radarr
+    - Use cautiously: legitimate brand-new releases will also be blocked
+    
+    **Recommended use case**: Enable only if your indexers frequently return fake torrents with 0-age timestamps.
+
+---
+
 ## Extension Policy
 
 | Variable | Default | Description |
