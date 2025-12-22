@@ -181,6 +181,9 @@ class Config:
     metadata_max_wait_sec: int = int(os.getenv("METADATA_MAX_WAIT_SEC", "0"))  # 0 = wait indefinitely
     metadata_download_budget_bytes: int = int(os.getenv("METADATA_DOWNLOAD_BUDGET_BYTES", "0"))  # 0 = no cap
 
+    # Torrent age validation (to filter fake torrents with 0 age)
+    min_torrent_age_minutes: int = int(os.getenv("MIN_TORRENT_AGE_MINUTES", "0"))  # Minimum age in minutes; 0 = disabled (default)
+
     # Radarr (ISO deletes)
     radarr_url: str = (os.getenv("RADARR_URL", "http://127.0.0.1:7878") or "").rstrip("/")
     radarr_apikey: str = os.getenv("RADARR_APIKEY", "")
@@ -1336,6 +1339,42 @@ class TorrentGuard:
         # Stop immediately and tag
         self.qbit.stop(torrent_hash)
         self.qbit.add_tags(torrent_hash, "guard:stopped")
+
+        # Check torrent age (filter out fake torrents with 0 or very recent creation date)
+        if self.cfg.min_torrent_age_minutes > 0:
+            creation_date = info.get("creation_date")  # Unix timestamp
+            if creation_date:
+                torrent_age_seconds = time.time() - creation_date
+                torrent_age_minutes = torrent_age_seconds / 60.0
+                
+                if torrent_age_minutes < self.cfg.min_torrent_age_minutes:
+                    log.info("Torrent age check: BLOCKED (age=%.1f mins < minimum=%d mins). Likely fake torrent.",
+                            torrent_age_minutes, self.cfg.min_torrent_age_minutes)
+                    
+                    # Blocklist in Sonarr/Radarr if applicable
+                    if category_norm in self.cfg.sonarr_categories and self.sonarr.enabled:
+                        try: self.sonarr.blocklist_download(torrent_hash)
+                        except Exception as e: log.error("Sonarr blocklist error: %s", e)
+                    if category_norm in self.cfg.radarr_categories and self.radarr.enabled:
+                        try: self.radarr.blocklist_download(torrent_hash)
+                        except Exception as e: log.error("Radarr blocklist error: %s", e)
+                    
+                    # Tag and delete
+                    self.qbit.add_tags(torrent_hash, "trash:too-new")
+                    if not self.cfg.dry_run:
+                        try:
+                            self.qbit.delete(torrent_hash, self.cfg.delete_files)
+                            log.info("Removed torrent %s (too new/fake, age=%.1f mins).", torrent_hash, torrent_age_minutes)
+                        except Exception as e:
+                            log.error("qB delete failed: %s", e)
+                    else:
+                        log.info("DRY-RUN: would remove torrent %s (too new, age=%.1f mins).", torrent_hash, torrent_age_minutes)
+                    return
+                else:
+                    log.info("Torrent age check: PASSED (age=%.1f mins >= minimum=%d mins).",
+                            torrent_age_minutes, self.cfg.min_torrent_age_minutes)
+            else:
+                log.warning("Torrent age check: creation_date not available, skipping age validation.")
 
         # Tracker hosts (for whitelist decisions)
         trackers = self.qbit.trackers(torrent_hash) or []

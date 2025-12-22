@@ -440,6 +440,45 @@ Example dry-run output:
 
 ## Common Configuration Issues
 
+### Fake Torrents with 0 Age
+
+**Issue**: Indexers returning fake torrents with 0 minutes age or very recent creation dates
+
+**Symptoms**:
+- Torrents appear legitimate but have creation_date timestamp of 0 or just a few minutes old
+- Downloads fail or contain junk content
+- Sonarr/Radarr repeatedly grab the same fake releases
+
+**Solution**: Enable minimum torrent age validation
+
+```yaml
+environment:
+  - MIN_TORRENT_AGE_MINUTES=5  # Block torrents younger than 5 minutes
+```
+
+**Important Considerations**:
+
+!!! warning "Trade-offs"
+    - **Disabled by default** to avoid blocking legitimate brand-new releases
+    - When enabled, torrents younger than the threshold are automatically:
+        - Tagged as `trash:too-new`
+        - Blocklisted in Sonarr/Radarr
+        - Deleted from qBittorrent
+    - Use cautiously if your indexers frequently have brand-new scene releases
+
+**Recommended Values**:
+- `5` - Good balance for most use cases
+- `10` - More aggressive filtering
+- `0` - Disabled (default)
+
+**Log Output**:
+```
+2025-12-22 12:00:00 | INFO | Torrent age check: BLOCKED (age=0.2 mins < minimum=5 mins). Likely fake torrent.
+2025-12-22 12:00:00 | INFO | Removed torrent abc123... (too new/fake, age=0.2 mins).
+```
+
+---
+
 ### Environment Variable Problems
 
 **Issue**: Variables not being read properly

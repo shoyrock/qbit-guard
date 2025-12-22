@@ -370,6 +370,54 @@ This page provides working examples of qbit-guard configurations for different d
     !!! danger "Dry Run Mode"
         This configuration runs in dry-run mode and won't actually delete torrents. Perfect for testing.
 
+=== "Fake Torrent Protection"
+
+    **Protection against fake torrents with 0 or very recent age**
+
+    ```yaml
+    version: '3.8'
+
+    services:
+      qbit-guard:
+        image: ghcr.io/gengines/qbit-guard:latest
+        container_name: qbit-guard
+        restart: unless-stopped
+        environment:
+          # qBittorrent connection
+          - QBIT_HOST=http://qbittorrent:8080
+          - QBIT_USER=admin
+          - QBIT_PASS=your_password_here
+          - QBIT_ALLOWED_CATEGORIES=tv-sonarr,radarr
+          
+          # Fake torrent age protection (disabled by default)
+          - MIN_TORRENT_AGE_MINUTES=5
+          
+          # Standard Sonarr pre-air checking
+          - ENABLE_PREAIR_CHECK=1
+          - SONARR_URL=http://sonarr:8989
+          - SONARR_APIKEY=your_sonarr_api_key_here
+          
+          # Radarr integration
+          - RADARR_URL=http://radarr:7878
+          - RADARR_APIKEY=your_radarr_api_key_here
+          
+          # ISO cleanup
+          - ENABLE_ISO_CHECK=1
+          
+          - LOG_LEVEL=INFO
+        networks: [arr-network]
+
+    networks:
+      arr-network: { driver: bridge }
+    ```
+
+    !!! warning "Use with Caution"
+        - **Blocks torrents younger than 5 minutes** (adjustable)
+        - Helps filter fake torrents with 0-age timestamps
+        - **May block legitimate brand-new releases**
+        - Recommended only if experiencing frequent fake torrent issues
+        - Set to `0` to disable (default behavior)
+
 ---
 
 ## :cloud: Kubernetes Examples
