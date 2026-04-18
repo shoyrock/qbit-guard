@@ -15,6 +15,9 @@ Complete reference of all environment variables supported by qbit-guard, organiz
 | `QBIT_DELETE_FILES` | `true` | Delete files when removing torrents |
 | `QBIT_IGNORE_TLS` | `0` | Set to `1` to ignore SSL certificate errors |
 | `QBIT_DRY_RUN` | `0` | Set to `1` for testing mode (no actual deletions) |
+| `QBIT_REQUEST_RETRIES` | `3` | Retry transient qBittorrent API failures per request |
+| `QBIT_REQUEST_INITIAL_BACKOFF_SEC` | `1.0` | Initial retry delay for qB API requests |
+| `QBIT_REQUEST_MAX_BACKOFF_SEC` | `15.0` | Maximum retry delay for qB API requests |
 
 ---
 
@@ -25,6 +28,9 @@ Complete reference of all environment variables supported by qbit-guard, organiz
 | `WATCH_POLL_SECONDS` | `3.0` | How often to check qBittorrent for new torrents (seconds) |
 | `WATCH_PROCESS_EXISTING_AT_START` | `0` | Process existing torrents when container starts (`0` or `1`) |
 | `WATCH_RESCAN_KEYWORD` | `rescan` | Keyword in category/tags to force reprocessing |
+| `GUARD_RUN_MAX_RETRIES` | `3` | Retry failed per-torrent guard runs this many times |
+| `GUARD_RUN_INITIAL_BACKOFF_SEC` | `30.0` | Initial delay before retrying a failed guard run |
+| `GUARD_RUN_MAX_BACKOFF_SEC` | `900.0` | Maximum delay between failed guard-run retries |
 
 ---
 
@@ -114,6 +120,7 @@ Complete reference of all environment variables supported by qbit-guard, organiz
 | `METADATA_POLL_INTERVAL` | `1.5` | Seconds between file list checks during metadata fetching |
 | `METADATA_MAX_WAIT_SEC` | `0` | Max wait for metadata resolution (`0` = infinite) |
 | `METADATA_DOWNLOAD_BUDGET_BYTES` | `0` | Max bytes to download during metadata wait (`0` = no limit) |
+| `METADATA_MAX_TRANSIENT_ERRORS` | `8` | Allow this many transient qB errors before abandoning metadata fetch |
 
 ---
 
