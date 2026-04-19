@@ -537,6 +537,7 @@ class BaseArr:
             return [r for r in recs if (r.get("downloadId","").lower() == download_id.lower())]
         except Exception as e:
             log.warning("Failed to get history %s", e)
+        return []
 
     def queue_ids_for_download(self, download_id: str) -> List[int]:
         """Return queue row IDs for a given downloadId (used for queue failover blocklist)."""
